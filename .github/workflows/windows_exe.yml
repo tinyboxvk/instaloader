@@ -19,25 +19,24 @@ jobs:
         id: get_version
         env:
           GITHUB_REF: ${{ github.ref }}
-        run: echo "VERSION=${GITHUB_REF/refs\/tags\/v/}" >> $GITHUB_OUTPUT
+        run: echo "VERSION=CI" >> $GITHUB_OUTPUT
         shell: bash
       - name: Run custom python script for EXE creation
         env:
-          VERSION_TAG: v${{ steps.get_version.outputs.VERSION }}
+          VERSION_TAG: v_ci
         run: python deploy/windows/create_exe.py
       - name: Create draft release
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        if: github.event_name == 'push'
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.get_version.outputs.VERSION }}
-          release_name: Version ${{ steps.get_version.outputs.VERSION }}
+          tag_name: v_ci
+          release_name: Version CI
           draft: true
           prerelease: contains(steps.get_version.outputs.VERSION, 'a') || contains(steps.get_version.outputs.VERSION, 'b') || contains(steps.get_version.outputs.VERSION, 'c')
       - name: Upload EXE as release asset
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
