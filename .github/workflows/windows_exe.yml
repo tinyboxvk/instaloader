@@ -23,7 +23,7 @@ jobs:
         shell: bash
       - name: Run custom python script for EXE creation
         env:
-          VERSION_TAG: v_ci
+          VERSION_TAG: vCI
         run: python deploy/windows/create_exe.py
       - name: Create draft release
         if: github.event_name == 'push'
@@ -32,7 +32,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v_ci
+          tag_name: vCI
           release_name: Version CI
           draft: true
           prerelease: contains(steps.get_version.outputs.VERSION, 'a') || contains(steps.get_version.outputs.VERSION, 'b') || contains(steps.get_version.outputs.VERSION, 'c')
@@ -43,6 +43,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./instaloader-v${{ steps.get_version.outputs.VERSION }}-windows-standalone.zip
-          asset_name: instaloader-v${{ steps.get_version.outputs.VERSION }}-windows-standalone.zip
+          asset_path: ./instaloader-vCI-windows-standalone.zip
+          asset_name: instaloader-vCI-windows-standalone.zip
           asset_content_type: application/zip
