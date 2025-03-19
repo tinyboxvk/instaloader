@@ -223,25 +223,26 @@ class Post:
             8: "GraphSidecar",
         }
         fake_node = {
-            "shortcode": media["code"],
-            "id": media["pk"],
-            "__typename": media_types[media["media_type"]],
-            "is_video": media_types[media["media_type"]] == "GraphVideo",
-            "date": media["taken_at"],
-            "caption": media["caption"].get("text") if media.get("caption") is not None else None,
-            "title": media.get("title"),
-            "viewer_has_liked": media["has_liked"],
-            "edge_media_preview_like": {"count": media["like_count"]},
+            "shortcode": media["shortcode"],
+            "id": media["id"],
+            "owner": media["owner"],
+            "__typename": media["__typename"],
+            "is_video": media["__typename"] == "GraphVideo",
+            "date": media["taken_at_timestamp"],
+            "caption": media["edge_media_to_caption"]["edges"][0]["node"].get("text") if media.get("edge_media_to_caption") and media["edge_media_to_caption"].get("edges") else None,
+            # "title": media.get("title"),
+            # "viewer_has_liked": media["has_liked"],
+            "edge_media_preview_like": media["edge_media_preview_like"],
             "accessibility_caption": media.get("accessibility_caption"),
             "comments": media.get("comment_count"),
             "iphone_struct": media,
         }
         with suppress(KeyError):
-            fake_node["display_url"] = media['image_versions2']['candidates'][0]['url']
+            fake_node["display_url"] = media["display_url"]
         with suppress(KeyError, TypeError):
-            fake_node["video_url"] = media['video_versions'][-1]['url']
+            fake_node["video_url"] = media['video_url']
             fake_node["video_duration"] = media["video_duration"]
-            fake_node["video_view_count"] = media["view_count"]
+            fake_node["video_view_count"] = media["video_view_count"]
         with suppress(KeyError, TypeError):
             fake_node["edge_sidecar_to_children"] = {"edges": [{"node":
                 Post._convert_iphone_carousel(node, media_types)}
@@ -1199,16 +1200,17 @@ class Profile:
         self._obtain_metadata()
         return NodeIterator(
             context = self._context,
-            edge_extractor = lambda d: d['data']['xdt_api__v1__feed__user_timeline_graphql_connection'],
+            edge_extractor = lambda d: d['data']['user']['edge_owner_to_timeline_media'],
             node_wrapper = lambda n: Post.from_iphone_struct(self._context, n),
             query_variables = {'data': {
                 'count': 12, 'include_relationship_info': True,
                 'latest_besties_reel_media': True, 'latest_reel_media': True},
-             'username': self.username},
+             'id': self.userid},
             query_referer = 'https://www.instagram.com/{0}/'.format(self.username),
             is_first = Profile._make_is_newest_checker(),
-            doc_id = '7898261790222653',
+            doc_id = '7950326061742207',
             query_hash = None,
+	    first_data = self._metadata("edge_owner_to_timeline_media")
         )
 
     def get_saved_posts(self) -> NodeIterator[Post]:
