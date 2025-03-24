@@ -217,11 +217,7 @@ class Post:
         """Create a post from a given iphone_struct.
 
         .. versionadded:: 4.9"""
-        media_types = {
-            1: "GraphImage",
-            2: "GraphVideo",
-            8: "GraphSidecar",
-        }
+        media_caption = media.get("edge_media_to_caption")
         fake_node = {
             "shortcode": media["shortcode"],
             "id": media["id"],
@@ -229,9 +225,9 @@ class Post:
             "__typename": media["__typename"],
             "is_video": media["__typename"] == "GraphVideo",
             "date": media["taken_at_timestamp"],
-            "caption": media["edge_media_to_caption"]["edges"][0]["node"].get("text") if media.get("edge_media_to_caption") and media["edge_media_to_caption"].get("edges") else None,
+            "caption": media_caption["edges"][0]["node"].get("text") if media_caption and media_caption.get("edges") else None,
             # "title": media.get("title"),
-            # "viewer_has_liked": media["has_liked"],
+            "viewer_has_liked": media.get("viewer_has_liked"),
             "edge_media_preview_like": media["edge_media_preview_like"],
             "accessibility_caption": media.get("accessibility_caption"),
             "comments": media.get("comment_count"),
@@ -240,24 +236,11 @@ class Post:
         with suppress(KeyError):
             fake_node["display_url"] = media["display_url"]
         with suppress(KeyError, TypeError):
-            fake_node["video_url"] = media['video_url']
-            fake_node["video_duration"] = media["video_duration"]
-            fake_node["video_view_count"] = media["video_view_count"]
+            fake_node["edge_sidecar_to_children"] = media["edge_sidecar_to_children"]
         with suppress(KeyError, TypeError):
-            fake_node["edge_sidecar_to_children"] = {"edges": [{"node":
-                Post._convert_iphone_carousel(node, media_types)}
-                for node in media["carousel_media"]]}
+            fake_node["video_url"] = media['video_url']
+	    fake_node["video_view_count"] = media["video_view_count"]
         return cls(context, fake_node, Profile.from_iphone_struct(context, media["user"]) if "user" in media else None)
-
-    @staticmethod
-    def _convert_iphone_carousel(iphone_node: Dict[str, Any], media_types: Dict[int, str]) -> Dict[str, Any]:
-        fake_node = {
-            "display_url": iphone_node["image_versions2"]["candidates"][0]["url"],
-            "is_video": media_types[iphone_node["media_type"]] == "GraphVideo",
-        }
-        if "video_versions" in iphone_node and iphone_node["video_versions"] is not None:
-            fake_node["video_url"] = iphone_node["video_versions"][0]["url"]
-        return fake_node
 
     @staticmethod
     def shortcode_to_mediaid(code: str) -> int:
@@ -500,7 +483,7 @@ class Post:
                         except (InstaloaderException, KeyError, IndexError) as err:
                             self._context.error(f"Unable to fetch high quality image version of {self}: {err}")
                     yield PostSidecarNode(is_video=is_video, display_url=display_url,
-                                          video_url=node['video_url'] if is_video else None)
+                                          video_url=str(node['video_url']) if is_video else "")
 
     @property
     def caption(self) -> Optional[str]:
