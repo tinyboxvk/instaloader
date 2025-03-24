@@ -235,11 +235,11 @@ class Post:
         }
         with suppress(KeyError):
             fake_node["display_url"] = media["display_url"]
-        with suppress(KeyError, TypeError):
+        with suppress(KeyError):
             fake_node["edge_sidecar_to_children"] = media["edge_sidecar_to_children"]
         with suppress(KeyError, TypeError):
             fake_node["video_url"] = media['video_url']
-	    fake_node["video_view_count"] = media["video_view_count"]
+            fake_node["video_view_count"] = media["video_view_count"]
         return cls(context, fake_node, Profile.from_iphone_struct(context, media["user"]) if "user" in media else None)
 
     @staticmethod
@@ -1193,7 +1193,7 @@ class Profile:
             is_first = Profile._make_is_newest_checker(),
             doc_id = '7950326061742207',
             query_hash = None,
-	    first_data = self._metadata("edge_owner_to_timeline_media")
+            first_data = self._metadata("edge_owner_to_timeline_media")
         )
 
     def get_saved_posts(self) -> NodeIterator[Post]:
